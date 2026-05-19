@@ -1,0 +1,16 @@
+This query runs a correlation test on delay impact factor and delay minutes:
+
+WITH inc AS (SELECT A.line_id, A.incident_type, A.delay_impact_factor AS dif, 
+  A.timestamp, ROUND(AVG(B.delay_minutes), 2) AS adm
+FROM incidents A
+JOIN trips B ON A.line_id = B.line_id
+WHERE B.scheduled_departure_time BETWEEN A.timestamp - interval '1 hour'
+  AND A.timestamp + interval '1 hour'
+GROUP BY A.line_id, A.incident_type, A.delay_impact_factor, A.timestamp)
+
+SELECT
+  (COUNT(*) * SUM(dif * adm) - SUM(dif) * SUM(adm)) / 
+  (SQRT(COUNT(*) * SUM(POWER(dif, 2)) - POWER(SUM(dif), 2)) *
+  SQRT(COUNT(*) * SUM(POWER(adm, 2)) - POWER(SUM(adm), 2)))
+  AS correlation_coefficient
+FROM inc;
