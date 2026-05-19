@@ -1,0 +1,20 @@
+This query filters the main dataset to strike days and runs aggregations on the filtered data:
+
+WITH RECURSIVE DateSeries AS (
+  SELECT CAST(strike_start AS timestamp) AS dateValue
+  FROM strikes
+  UNION
+  SELECT dateValue + INTERVAL '1 day'
+  FROM DateSeries
+  WHERE dateValue + INTERVAL '1 day' <= (
+  SELECT strike_end FROM strikes WHERE dateValue + INTERVAL '1 day' BETWEEN strike_start AND strike_end)
+)
+
+SELECT COUNT(CASE WHEN is_cancelled=TRUE THEN 1 END)*100/COUNT(*) AS perc_cancelled,
+  COUNT(CASE WHEN is_delayed=TRUE THEN 1 END)*100/COUNT(*) AS perc_delayed,
+  ROUND(AVG(delay_minutes), 2) AS avg_strike_minutes
+FROM trips A
+JOIN
+(SELECT DISTINCT dateValue
+FROM DateSeries
+ORDER BY dateValue) B ON date_trunc('day', A.scheduled_departure_time) = date_trunc('day', B.dateValue);
