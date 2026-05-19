@@ -5,8 +5,8 @@ SELECT A.weather_condition, ROUND(AVG(A.precipitation_mm), 2) AS avg_precipitati
   ROUND(AVG(A.wind_speed_kmh), 2) AS avg_windspeed,
   ROUND(AVG(B.delay_minutes), 2) AS avg_delay_min,
   MAX(B.delay_minutes) AS max_delay_min,
-  ROUND(COUNT(CASE WHEN B.is_delayed = TRUE THEN 1 END)*100/SUM(COUNT*)) OVER (PARTITION BY A.weather_condition, 2) AS perc_is_delayed,
-  ROUND(COUNT(CASE WHEN B.is_cancelled = TRUE THEN 1 END)*100/SUM(COUNT*)) OVER (PARTITION BY A.weather_condition, 2) AS perc_is_cancelled
+  ROUND(COUNT(CASE WHEN B.is_delayed = TRUE THEN 1 END)*100/SUM(COUNT(*)) OVER (PARTITION BY A.weather_condition), 2) AS perc_is_delayed,
+  ROUND(COUNT(CASE WHEN B.is_cancelled = TRUE THEN 1 END)*100/SUM(COUNT(*)) OVER (PARTITION BY A.weather_condition), 2) AS perc_is_cancelled
 FROM weather A
 JOIN trips B ON A.timestamp = date_trunc('hour', B.scheduled_departure_time)
 WHERE B.delay_minutes > 1
